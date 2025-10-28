@@ -150,11 +150,18 @@ int main() {
             completed++;
         } else {
             // Process is not complete
-            if (current_process->remaining_quantum == 0) {
-                // Time quantum expired, reset it and add back to ready queue
+            bool was_preempted = (preempt_time != -1);
+            
+            if (was_preempted) {
+                // Preempted by higher priority - reset quantum for fairness
+                current_process->remaining_quantum = time_quantum;
+            } else if (current_process->remaining_quantum == 0) {
+                // Time quantum expired naturally, reset it
                 current_process->remaining_quantum = time_quantum;
             }
-            // Add process back to ready queue (whether preempted or quantum expired)
+            // else: process used partial quantum and will return with remaining quantum intact
+            
+            // All processes that re-enter queue get new queue_order (go to back for round robin)
             current_process->queue_order = queue_counter++;
             ready_queue.push(current_process);
         }
